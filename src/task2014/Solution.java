@@ -1,0 +1,48 @@
+package task2014;
+
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/* 
+Serializable Solution
+*/
+
+public class Solution implements Serializable {
+    public static void main(String[] args) {
+        Solution sol=new Solution(1);
+        try(ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("solution.dat"))){
+            outputStream.writeObject(sol);
+        }catch (Exception e){
+            System.out.println(e);}
+        Solution newSol=new Solution(2);
+        try(ObjectInputStream inputStream=new ObjectInputStream(new FileInputStream("solution.dat"))){
+            newSol=(Solution) inputStream.readObject();
+        }catch (Exception e){
+            System.out.println(e);}
+        System.out.println(newSol);
+        System.out.println(sol);
+
+
+        //System.out.println(new Solution(4));
+    }
+
+    private transient final String pattern = "dd MMMM yyyy, EEEE";
+    private transient Date currentDate;
+    private  transient int temperature;
+    String string;
+
+    public Solution(int temperature) {
+        this.currentDate = new Date();
+        this.temperature = temperature;
+
+        string = "Today is %s, and the current temperature is %s C";
+        SimpleDateFormat format = new SimpleDateFormat(pattern);
+        this.string = String.format(string, format.format(currentDate), temperature);
+    }
+
+    @Override
+    public String toString() {
+        return this.string;
+    }
+}
