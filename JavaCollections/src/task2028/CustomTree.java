@@ -2,6 +2,7 @@ package task2028;
 
 import java.io.Serializable;
 import java.util.AbstractList;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.List;
 
@@ -11,12 +12,8 @@ import java.util.List;
 */
 
 public  class CustomTree extends AbstractList<String> implements Cloneable, Serializable{
-    //private AbstractList<String> list;
-    private int index;
-    private String element;
     Entry<String> root;
     private int count=0;
-    private String res=null;
 
     public void set(int index) {
         throw new UnsupportedOperationException();
@@ -27,79 +24,96 @@ public  class CustomTree extends AbstractList<String> implements Cloneable, Seri
 
     @Override
     public boolean add(String element) {
-        Entry node = new Entry(element);
-        if(root==null){
-            root = node;
+        if(root.elementName==null) {
+            root = new Entry(element);
             count++;
-        }else {
-            addElement(root,element);
+            //System.out.println("root element is "+element);
+            //root.parent=null;
+        }else{
+            ArrayDeque<Entry> elementQueue = new ArrayDeque<Entry>();
+            elementQueue.offer(root);
+            int lastCount=count;
+            while (lastCount==count){
+                Entry current=elementQueue.poll();
+                if(current.isAvailableToAddChildren()){
+                    count++;
+                    if(current.leftChild==null){
+                        current.leftChild=new Entry(element);
+                        current.availableToAddLeftChildren=false;
+                        current.leftChild.parent=current;
+                        //System.out.println("added new left element: "+element);
+                        //System.out.println(current.elementName);
+                        //System.out.println(current.leftChild.parent.elementName);
+                    }else{
+                        current.rightChild=new Entry(element);
+                        current.availableToAddRightChildren=false;
+                        current.rightChild.parent=current;
+                        //System.out.println("added new right element: "+element);
+                    }
+                }else{
+                    elementQueue.offer(current.leftChild);
+                    elementQueue.offer(current.rightChild);
+                }
+            }
         }
         return true;
-
-
-        /*if(root==null){
-            root = node;
-            return true;
-        }else{
-            Entry current = root;
-            if(current.isAvailableToAddChildren()){
-                if(current.leftChild==null){
-                    current.leftChild = node;
-                    current.availableToAddLeftChildren=false;
-                    return true;
-                }else{
-                    current.rightChild=node;
-                    current.availableToAddRightChildren=false;
-                    return true;
-                }
-            }else{
-                if(current.leftChild.isAvailableToAddChildren()){
-                    if(current.leftChild.leftChild==null){
-                        current.leftChild.leftChild=node;
-                        current.leftChild.availableToAddLeftChildren=false;
-                        return true;
-                    }else{
-                        current.rightChild.rightChild=node;
-                        current.rightChild.availableToAddRightChildren=false;
-                        return true;
-                    }
-                }else{
-                    if(current.rightChi
-                    ld.leftChild==null){
-                        current.leftChild.leftChild=node;
-                        current.leftChild.availableToAddLeftChildren=false;
-                        return true;
-                    }else{
-                        current.rightChild.rightChild=node;
-                        current.rightChild.availableToAddRightChildren=false;
-                        return true;
-                    }
-                }
-            }
-        }*/
     }
 
-    public void addElement(Entry current, String element){
-        if(current!=null){
-            if(element.hashCode()<current.elementName.hashCode()){
-                addElement(current.leftChild,element);
-            }else{
-                addElement(current.rightChild,element);
+    @Override
+    public boolean remove(Object o) {
+        if(o instanceof String){
+            String s=String.valueOf(o);
+            ArrayDeque<Entry> elementQueue = new ArrayDeque<Entry>();
+            elementQueue.offer(root);
+            while (!elementQueue.isEmpty()){
+                Entry current=elementQueue.poll();
+                if(current.leftChild!=null){
+                    if(current.leftChild.elementName.equals(s)) {
+                        count=count-countForDelete(current.leftChild);
+                        current.leftChild = null;
+                        current.availableToAddLeftChildren = true;
+                        break;
+                    }else {
+                        elementQueue.offer(current.leftChild);
+                    }
+                }
+                if(current.rightChild!=null) {
+                    if(current.rightChild.elementName.equals(s)) {
+                        count=count-countForDelete(current.rightChild);
+                        current.rightChild = null;
+                        current.availableToAddRightChildren = true;
+                        break;
+                    }else {
+                        elementQueue.offer(current.rightChild);
+                    }
+                }
             }
         }else{
-            current=new Entry(element);
-            count++;
+            throw new UnsupportedOperationException();
         }
+        return true;
     }
 
-    /*public boolean isNull(Entry current){
-
-    }*/
+    public int countForDelete(Entry element){
+        int res=1;
+        ArrayDeque<Entry> elementQueue = new ArrayDeque<Entry>();
+        elementQueue.offer(element);
+        while (!elementQueue.isEmpty()){
+            Entry current=elementQueue.poll();
+            if(current.leftChild!=null){
+                res++;
+                elementQueue.offer(current.leftChild);
+            }
+            if(current.rightChild!=null){
+                res++;
+                elementQueue.offer(current.rightChild);
+            }
+        }
+        return res;
+    }
 
     public void add(int index, String element){throw new UnsupportedOperationException();}
-    public String remove(int index){
-        throw new UnsupportedOperationException();
-    }
+    public String remove(int index){throw new UnsupportedOperationException();}
     public List<String> subList(int fromIndex, int toIndex){
         throw new UnsupportedOperationException();
     }
@@ -111,7 +125,7 @@ public  class CustomTree extends AbstractList<String> implements Cloneable, Seri
     }
 
     public CustomTree() {
-        this.root=new Entry<String>("");
+        this.root=new Entry<String>("0");
     }
 
     @Override
@@ -127,26 +141,26 @@ public  class CustomTree extends AbstractList<String> implements Cloneable, Seri
     }
 
     public String getParent(String s){
-        if(s.hashCode()==root.elementName.hashCode()){
-            return res;
-        }else{
-            parent(s,root);
-        }
-        return res;
-    }
-    public String parent(String s,Entry current){
-        if(s.equals(current.leftChild) | s.equals(current.rightChild)){
-            res= current.elementName;
-            return res;
-        }else{
-            if(s.hashCode()<current.elementName.hashCode()){
-                parent(s,current.leftChild);
+        String parent=null;
+        ArrayDeque<Entry> elementQueue = new ArrayDeque<Entry>();
+        elementQueue.offer(root);
+        while (!elementQueue.isEmpty()){
+            //System.out.println("its ok");
+            Entry current=elementQueue.poll();
+            if(current.elementName.equals(s)){
+                //System.out.println("first");
+               parent=current.parent.elementName;
             }else{
-                parent(s,current.rightChild);
+                //System.out.println("second");
+                if(!current.isAvailableToAddChildren()){
+                    elementQueue.offer(current.leftChild);
+                    elementQueue.offer(current.rightChild);
+                }
             }
-            return res;
         }
+        return parent;
     }
+
 
     static class Entry<T> implements Serializable{
         String elementName;
