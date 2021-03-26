@@ -1,4 +1,4 @@
-package task2312;
+package task23.task2312;
 
 public class SnakeSection {
     private int x;
